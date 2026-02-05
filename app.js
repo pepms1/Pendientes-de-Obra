@@ -19,14 +19,14 @@ const count = document.getElementById("task-count");
 const template = document.getElementById("task-item-template");
 
 const firebaseConfig = {
-  apiKey: "REEMPLAZA_CON_TU_API_KEY",
-  authDomain: "REEMPLAZA_CON_TU_AUTH_DOMAIN",
-  projectId: "REEMPLAZA_CON_TU_PROJECT_ID",
-  storageBucket: "REEMPLAZA_CON_TU_STORAGE_BUCKET",
-  messagingSenderId: "REEMPLAZA_CON_TU_SENDER_ID",
-  appId: "REEMPLAZA_CON_TU_APP_ID",
+  apiKey: "AIzaSyCavLwZaWBRSvZK-X8YJPyty8zG7jq-H9M",
+  authDomain: "pendientes-obra.firebaseapp.com",
+  projectId: "pendientes-obra",
+  storageBucket: "pendientes-obra.firebasestorage.app",
+  messagingSenderId: "876724038271",
+  appId: "1:876724038271:web:228a06b6610a6d57c5ad4a",
+  measurementId: "G-RJCZJKNRLC"
 };
-
 let db;
 
 const formatDate = (timestamp) => {
