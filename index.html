@@ -47,6 +47,30 @@
         </div>
         <ul id="task-list" class="task-list"></ul>
       </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Completados</h2>
+          <span id="completed-count">0</span>
+        </div>
+        <ul id="completed-list" class="task-list"></ul>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Editar pendientes</h2>
+        </div>
+        <div class="edit-grid">
+          <div>
+            <h3 class="edit-grid__title">Activos</h3>
+            <ul id="edit-active-list" class="task-list task-list--edit"></ul>
+          </div>
+          <div>
+            <h3 class="edit-grid__title">Completados</h3>
+            <ul id="edit-completed-list" class="task-list task-list--edit"></ul>
+          </div>
+        </div>
+      </section>
     </main>
 
     <template id="task-item-template">
@@ -56,6 +80,9 @@
           <span class="task__text"></span>
         </label>
         <span class="task__meta"></span>
+        <button type="button" class="task__delete" aria-label="Eliminar pendiente">
+          Eliminar
+        </button>
       </li>
     </template>
 
