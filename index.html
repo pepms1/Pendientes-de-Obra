@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pendientes de Obra</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <div>
+          <p class="app__eyebrow">Control de obra</p>
+          <h1>Pendientes de obra</h1>
+          <p class="app__subtitle">
+            Sincroniza tareas en la nube y marca avances desde cualquier dispositivo.
+          </p>
+        </div>
+        <div class="status-wrapper">
+          <div class="status" id="status">Conectando...</div>
+          <p class="status-detail" id="status-detail"></p>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2>Nuevo pendiente</h2>
+        <form id="task-form" class="task-form">
+          <label class="field">
+            <span>Descripción</span>
+            <input
+              type="text"
+              id="task-input"
+              name="task"
+              placeholder="Ej. Revisar instalación eléctrica"
+              autocomplete="off"
+              required
+            />
+          </label>
+          <button type="submit">Agregar</button>
+        </form>
+        <p class="hint">
+          Cada pendiente se guarda con la fecha y hora del registro en la nube.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Pendientes</h2>
+          <span id="task-count">0</span>
+        </div>
+        <ul id="task-list" class="task-list"></ul>
+      </section>
+    </main>
+
+    <template id="task-item-template">
+      <li class="task">
+        <label class="task__content">
+          <input type="checkbox" class="task__toggle" />
+          <span class="task__text"></span>
+        </label>
+        <span class="task__meta"></span>
+      </li>
+    </template>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
