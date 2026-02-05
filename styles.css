@@ -90,6 +90,18 @@ h1 {
   font-weight: 600;
 }
 
+.edit-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.edit-grid__title {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #475569;
+}
+
 .task-form {
   display: flex;
   gap: 16px;
@@ -168,6 +180,26 @@ button:hover {
 .task__meta {
   font-size: 13px;
   color: #64748b;
+}
+
+.task__delete {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.task__delete:hover {
+  background: #fecaca;
+}
+
+.task-list--edit .task__toggle {
+  display: none;
+}
+
+.task-list--edit .task__delete {
+  margin-left: auto;
 }
 
 .task--done {
