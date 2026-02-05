@@ -10,7 +10,6 @@ import {
   updateDoc,
   doc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
 
 const statusEl = document.getElementById("status");
 const form = document.getElementById("task-form");
@@ -19,11 +18,20 @@ const list = document.getElementById("task-list");
 const count = document.getElementById("task-count");
 const template = document.getElementById("task-item-template");
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCavLwZaWBRSvZK-X8YJPyty8zG7jq-H9M",
+  authDomain: "pendientes-obra.firebaseapp.com",
+  projectId: "pendientes-obra",
+  storageBucket: "pendientes-obra.firebasestorage.app",
+  messagingSenderId: "876724038271",
+  appId: "1:876724038271:web:228a06b6610a6d57c5ad4a",
+  measurementId: "G-RJCZJKNRLC"
+};
 let db;
 
 const formatDate = (timestamp) => {
   if (!timestamp) return "Sin fecha";
-  const date = timestamp.toDate ? timestamp.toDate() : timestamp;
+  const date = timestamp.toDate();
   return new Intl.DateTimeFormat("es-ES", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -50,10 +58,8 @@ const renderTasks = (snapshot) => {
     const text = fragment.querySelector(".task__text");
     const meta = fragment.querySelector(".task__meta");
 
-    const createdAt = data.createdAt ?? data.createdAtClient;
-
     text.textContent = data.text;
-    meta.textContent = `Registrado: ${formatDate(createdAt)}`;
+    meta.textContent = `Registrado: ${formatDate(data.createdAt)}`;
     toggle.checked = Boolean(data.completed);
 
     if (data.completed) {
@@ -70,16 +76,8 @@ const renderTasks = (snapshot) => {
   });
 };
 
-const hasPlaceholderConfig = (config) =>
-  Object.values(config).some((value) => String(value).startsWith("REEMPLAZA_"));
-
 const init = async () => {
   try {
-    if (hasPlaceholderConfig(firebaseConfig)) {
-      setStatus("Configura Firebase", "status--error");
-      return;
-    }
-
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
 
@@ -109,7 +107,6 @@ form.addEventListener("submit", async (event) => {
     text: value,
     completed: false,
     createdAt: serverTimestamp(),
-    createdAtClient: new Date(),
   });
 
   input.value = "";
