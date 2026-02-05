@@ -10,47 +10,39 @@ import {
   updateDoc,
   doc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
 
 const statusEl = document.getElementById("status");
-const statusDetailEl = document.getElementById("status-detail");
 const form = document.getElementById("task-form");
 const input = document.getElementById("task-input");
 const list = document.getElementById("task-list");
 const count = document.getElementById("task-count");
 const template = document.getElementById("task-item-template");
 
+const firebaseConfig = {
+  apiKey: "AIzaSyCavLwZaWBRSvZK-X8YJPyty8zG7jq-H9M",
+  authDomain: "pendientes-obra.firebaseapp.com",
+  projectId: "pendientes-obra",
+  storageBucket: "pendientes-obra.firebasestorage.app",
+  messagingSenderId: "876724038271",
+  appId: "1:876724038271:web:228a06b6610a6d57c5ad4a",
+  measurementId: "G-RJCZJKNRLC"
+};
 let db;
 
 const formatDate = (timestamp) => {
   if (!timestamp) return "Sin fecha";
-  const date = timestamp.toDate ? timestamp.toDate() : timestamp;
+  const date = timestamp.toDate();
   return new Intl.DateTimeFormat("es-ES", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 };
 
-const setStatus = (text, variant, detail = "") => {
+const setStatus = (text, variant) => {
   statusEl.textContent = text;
   statusEl.classList.remove("status--ok", "status--error");
   if (variant) {
     statusEl.classList.add(variant);
-  }
-  statusDetailEl.textContent = detail;
-};
-
-const humanizeError = (error) => {
-  if (!error) return "";
-  switch (error.code) {
-    case "permission-denied":
-      return "Permisos insuficientes en Firestore.";
-    case "unavailable":
-      return "Firestore no disponible. Revisa tu conexión.";
-    case "invalid-argument":
-      return "Configuración inválida. Revisa firebase-config.js.";
-    default:
-      return error.message || "Error desconocido.";
   }
 };
 
@@ -66,10 +58,8 @@ const renderTasks = (snapshot) => {
     const text = fragment.querySelector(".task__text");
     const meta = fragment.querySelector(".task__meta");
 
-    const createdAt = data.createdAt ?? data.createdAtClient;
-
     text.textContent = data.text;
-    meta.textContent = `Registrado: ${formatDate(createdAt)}`;
+    meta.textContent = `Registrado: ${formatDate(data.createdAt)}`;
     toggle.checked = Boolean(data.completed);
 
     if (data.completed) {
@@ -77,39 +67,17 @@ const renderTasks = (snapshot) => {
     }
 
     toggle.addEventListener("change", async () => {
-      try {
-        await updateDoc(doc(db, "pendientes", docSnapshot.id), {
-          completed: toggle.checked,
-        });
-        setStatus("Sincronizado", "status--ok");
-      } catch (error) {
-        console.error(error);
-        setStatus(
-          "No se pudo actualizar",
-          "status--error",
-          humanizeError(error)
-        );
-      }
+      await updateDoc(doc(db, "pendientes", docSnapshot.id), {
+        completed: toggle.checked,
+      });
     });
 
     list.appendChild(fragment);
   });
 };
 
-const hasPlaceholderConfig = (config) =>
-  Object.values(config).some((value) => String(value).startsWith("REEMPLAZA_"));
-
 const init = async () => {
   try {
-    if (hasPlaceholderConfig(firebaseConfig)) {
-      setStatus(
-        "Configura Firebase",
-        "status--error",
-        "Completa firebase-config.js con tu proyecto."
-      );
-      return;
-    }
-
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
 
@@ -118,13 +86,13 @@ const init = async () => {
 
     onSnapshot(pendientesQuery, renderTasks, (error) => {
       console.error(error);
-      setStatus("Error de sincronización", "status--error", humanizeError(error));
+      setStatus("Error de sincronización", "status--error");
     });
 
     setStatus("Sincronizado", "status--ok");
   } catch (error) {
     console.error(error);
-    setStatus("Configura Firebase", "status--error", humanizeError(error));
+    setStatus("Configura Firebase", "status--error");
   }
 };
 
@@ -135,25 +103,14 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  try {
-    await addDoc(collection(db, "pendientes"), {
-      text: value,
-      completed: false,
-      createdAt: serverTimestamp(),
-      createdAtClient: new Date(),
-    });
+  await addDoc(collection(db, "pendientes"), {
+    text: value,
+    completed: false,
+    createdAt: serverTimestamp(),
+  });
 
-    input.value = "";
-    input.focus();
-    setStatus("Sincronizado", "status--ok");
-  } catch (error) {
-    console.error(error);
-    setStatus(
-      "No se pudo guardar",
-      "status--error",
-      humanizeError(error)
-    );
-  }
+  input.value = "";
+  input.focus();
 });
 
 init();
