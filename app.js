@@ -1,5 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
+  getAuth,
+  signInAnonymously,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
   addDoc,
   collection,
   getFirestore,
@@ -25,6 +29,13 @@ const completedCount = document.getElementById("completed-count");
 const template = document.getElementById("task-item-template");
 
 let db;
+
+const handleActionError = (error) => {
+  const errorCode = error?.code || "desconocido";
+  const errorMessage = error?.message || "Sin detalles";
+  console.error(error);
+  setStatus(buildSyncErrorStatus(errorCode, errorMessage), "status--error");
+};
 
 const hasPlaceholderConfig = (config) =>
   Object.values(config).some(
@@ -66,6 +77,23 @@ const buildSyncErrorStatus = (code, message) => {
   return `Error de sincronización: ${code}. ${suggestion} (${message})`;
 };
 
+const getInitErrorStatus = (code, message) => {
+  switch (code) {
+    case "auth/operation-not-allowed":
+      return "Activa Anonymous en Firebase Authentication para permitir acceso con reglas autenticadas.";
+    case "auth/unauthorized-domain":
+      return "Agrega este dominio en Authentication > Settings > Authorized domains (ejemplo: localhost).";
+    case "auth/invalid-api-key":
+      return "La apiKey de firebase-config.js no es válida. Revisa y copia nuevamente el firebaseConfig.";
+    case "auth/app-not-authorized":
+      return "La app no está autorizada en Firebase. Verifica projectId, appId y dominio autorizado.";
+    case "auth/network-request-failed":
+      return "No se pudo conectar con Firebase. Revisa tu conexión a internet y vuelve a intentar.";
+    default:
+      return `Error de inicialización: ${code}. Revisa Firebase Config/Auth. (${message})`;
+  }
+};
+
 const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   const fragment = template.content.cloneNode(true);
   const item = fragment.querySelector(".task");
@@ -82,9 +110,13 @@ const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
     toggle.disabled = true;
   } else {
     toggle.addEventListener("change", async () => {
-      await updateDoc(doc(db, "pendientes", docSnapshot.id), {
-        completed: toggle.checked,
-      });
+      try {
+        await updateDoc(doc(db, "pendientes", docSnapshot.id), {
+          completed: toggle.checked,
+        });
+      } catch (error) {
+        handleActionError(error);
+      }
     });
   }
 
@@ -94,7 +126,11 @@ const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
 
   if (showDelete) {
     deleteButton.addEventListener("click", async () => {
-      await deleteDoc(doc(db, "pendientes", docSnapshot.id));
+      try {
+        await deleteDoc(doc(db, "pendientes", docSnapshot.id));
+      } catch (error) {
+        handleActionError(error);
+      }
     });
   } else {
     deleteButton.remove();
@@ -139,6 +175,9 @@ const init = async () => {
     }
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    await signInAnonymously(auth);
     db = getFirestore(app);
 
     const pendientesRef = collection(db, "pendientes");
@@ -151,15 +190,12 @@ const init = async () => {
         hasReceivedFirstSnapshot = true;
         setStatus("Sincronizado", "status--ok");
       }
-    }, (error) => {
-      const errorCode = error?.code || "desconocido";
-      const errorMessage = error?.message || "Sin detalles";
-      console.error(error);
-      setStatus(buildSyncErrorStatus(errorCode, errorMessage), "status--error");
-    });
+    }, handleActionError);
   } catch (error) {
+    const errorCode = error?.code || "desconocido";
+    const errorMessage = error?.message || "Sin detalles";
     console.error(error);
-    setStatus("Configura Firebase", "status--error");
+    setStatus(getInitErrorStatus(errorCode, errorMessage), "status--error");
   }
 };
 
@@ -170,14 +206,18 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  await addDoc(collection(db, "pendientes"), {
-    text: value,
-    completed: false,
-    createdAt: serverTimestamp(),
-  });
+  try {
+    await addDoc(collection(db, "pendientes"), {
+      text: value,
+      completed: false,
+      createdAt: serverTimestamp(),
+    });
 
-  input.value = "";
-  input.focus();
+    input.value = "";
+    input.focus();
+  } catch (error) {
+    handleActionError(error);
+  }
 });
 
 init();
