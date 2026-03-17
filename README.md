@@ -25,3 +25,9 @@ Luego visita `http://localhost:5173`.
 ## Despliegue
 
 Sube los archivos (`index.html`, `styles.css`, `app.js`, `firebase-config.js`) a Firebase Hosting, Netlify o Vercel para acceder desde celular y escritorio.
+
+## Solución de errores comunes
+
+- **`permission-denied`**: revisa reglas de Firestore y confirma que Authentication anónima esté habilitada.
+- **`auth/unauthorized-domain`**: agrega tu dominio en `Authentication > Settings > Authorized domains` (incluye `localhost` si trabajas en local).
+- **`auth/invalid-api-key` o `auth/app-not-authorized`**: vuelve a copiar `firebaseConfig` desde Firebase Console.

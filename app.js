@@ -77,6 +77,23 @@ const buildSyncErrorStatus = (code, message) => {
   return `Error de sincronización: ${code}. ${suggestion} (${message})`;
 };
 
+const getInitErrorStatus = (code, message) => {
+  switch (code) {
+    case "auth/operation-not-allowed":
+      return "Activa Anonymous en Firebase Authentication para permitir acceso con reglas autenticadas.";
+    case "auth/unauthorized-domain":
+      return "Agrega este dominio en Authentication > Settings > Authorized domains (ejemplo: localhost).";
+    case "auth/invalid-api-key":
+      return "La apiKey de firebase-config.js no es válida. Revisa y copia nuevamente el firebaseConfig.";
+    case "auth/app-not-authorized":
+      return "La app no está autorizada en Firebase. Verifica projectId, appId y dominio autorizado.";
+    case "auth/network-request-failed":
+      return "No se pudo conectar con Firebase. Revisa tu conexión a internet y vuelve a intentar.";
+    default:
+      return `Error de inicialización: ${code}. Revisa Firebase Config/Auth. (${message})`;
+  }
+};
+
 const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   const fragment = template.content.cloneNode(true);
   const item = fragment.querySelector(".task");
@@ -175,6 +192,8 @@ const init = async () => {
       }
     }, handleActionError);
   } catch (error) {
+    const errorCode = error?.code || "desconocido";
+    const errorMessage = error?.message || "Sin detalles";
     console.error(error);
     if (error?.code === "auth/operation-not-allowed") {
       setStatus(
