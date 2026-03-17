@@ -6,8 +6,11 @@ Aplicación web simple para registrar pendientes de obra, con fecha automática 
 
 1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com/).
 2. Habilita **Firestore Database** en modo de prueba o con reglas adecuadas.
-3. Crea una app web en tu proyecto y copia el `firebaseConfig`.
-4. Abre `firebase-config.js` y reemplaza los valores de `firebaseConfig` por los de tu proyecto.
+3. Habilita **Authentication > Sign-in method > Anonymous**.
+4. Crea una app web en tu proyecto y copia el `firebaseConfig`.
+5. Abre `firebase-config.js` y reemplaza los valores de `firebaseConfig` por los de tu proyecto.
+
+Si usas reglas de Firestore que requieren usuario autenticado (`request.auth != null`), la app iniciará sesión de forma anónima automáticamente.
 
 ## Uso local
 
