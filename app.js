@@ -51,6 +51,24 @@ const setStatus = (text, variant) => {
   }
 };
 
+const getSyncErrorSuggestion = (code) => {
+  switch (code) {
+    case "permission-denied":
+      return "Verifica permisos de Firebase o inicia sesión con una cuenta autorizada.";
+    case "unavailable":
+      return "Comprueba tu conexión a internet y vuelve a intentarlo.";
+    case "failed-precondition":
+      return "Revisa la configuración o índices de Firestore en Firebase.";
+    default:
+      return "Intenta recargar la página si el problema persiste.";
+  }
+};
+
+const buildSyncErrorStatus = (code, message) => {
+  const suggestion = getSyncErrorSuggestion(code);
+  return `Error de sincronización: ${code}. ${suggestion} (${message})`;
+};
+
 const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   const fragment = template.content.cloneNode(true);
   const item = fragment.querySelector(".task");
@@ -123,13 +141,20 @@ const init = async () => {
 
     const pendientesRef = collection(db, "pendientes");
     const pendientesQuery = query(pendientesRef, orderBy("createdAt", "desc"));
+    let hasReceivedFirstSnapshot = false;
 
-    onSnapshot(pendientesQuery, renderTasks, (error) => {
+    onSnapshot(pendientesQuery, (snapshot) => {
+      renderTasks(snapshot);
+      if (!hasReceivedFirstSnapshot) {
+        hasReceivedFirstSnapshot = true;
+        setStatus("Sincronizado", "status--ok");
+      }
+    }, (error) => {
+      const errorCode = error?.code || "desconocido";
+      const errorMessage = error?.message || "Sin detalles";
       console.error(error);
-      setStatus("Error de sincronización", "status--error");
+      setStatus(buildSyncErrorStatus(errorCode, errorMessage), "status--error");
     });
-
-    setStatus("Sincronizado", "status--ok");
   } catch (error) {
     console.error(error);
     setStatus("Configura Firebase", "status--error");
