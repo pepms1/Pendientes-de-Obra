@@ -195,7 +195,15 @@ const init = async () => {
     const errorCode = error?.code || "desconocido";
     const errorMessage = error?.message || "Sin detalles";
     console.error(error);
-    setStatus(getInitErrorStatus(errorCode, errorMessage), "status--error");
+    if (error?.code === "auth/operation-not-allowed") {
+      setStatus(
+        "Activa Anonymous en Firebase Authentication para permitir acceso con reglas autenticadas.",
+        "status--error"
+      );
+      return;
+    }
+
+    setStatus("Configura Firebase y Authentication", "status--error");
   }
 };
 
