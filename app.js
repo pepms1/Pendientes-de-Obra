@@ -11,6 +11,7 @@ import {
   deleteDoc,
   doc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
 
 const statusEl = document.getElementById("status");
 const form = document.getElementById("task-form");
@@ -23,16 +24,12 @@ const activeCount = document.getElementById("task-count");
 const completedCount = document.getElementById("completed-count");
 const template = document.getElementById("task-item-template");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCavLwZaWBRSvZK-X8YJPyty8zG7jq-H9M",
-  authDomain: "pendientes-obra.firebaseapp.com",
-  projectId: "pendientes-obra",
-  storageBucket: "pendientes-obra.firebasestorage.app",
-  messagingSenderId: "876724038271",
-  appId: "1:876724038271:web:228a06b6610a6d57c5ad4a",
-  measurementId: "G-RJCZJKNRLC"
-};
 let db;
+
+const hasPlaceholderConfig = (config) =>
+  Object.values(config).some(
+    (value) => typeof value === "string" && value.includes("REEMPLAZA_CON_")
+  );
 
 const formatDate = (timestamp) => {
   if (!timestamp) return "Sin fecha";
@@ -136,6 +133,11 @@ const renderTasks = (snapshot) => {
 
 const init = async () => {
   try {
+    if (!firebaseConfig || hasPlaceholderConfig(firebaseConfig)) {
+      setStatus("Configura firebase-config.js con tus credenciales reales", "status--error");
+      return;
+    }
+
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
 
