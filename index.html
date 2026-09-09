@@ -11,6 +11,36 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="obra-bar">
+      <div class="obra-bar__inner">
+        <label class="obra-bar__select">
+          <span>Obra</span>
+          <select id="obra-select"></select>
+        </label>
+        <button
+          type="button"
+          id="obra-add-toggle"
+          class="obra-bar__add-toggle"
+          aria-expanded="false"
+          aria-controls="obra-form"
+        >
+          + Nueva obra
+        </button>
+        <form id="obra-form" class="obra-form" hidden>
+          <input
+            type="text"
+            id="obra-input"
+            name="obra"
+            placeholder="Nombre de la obra"
+            autocomplete="off"
+            required
+          />
+          <button type="submit">Agregar</button>
+        </form>
+      </div>
+      <p class="current-obra" id="current-obra-label"></p>
+    </div>
+
     <main class="app">
       <header class="app__header">
         <div>
@@ -22,47 +52,6 @@
         </div>
         <div class="status" id="status">Conectando...</div>
       </header>
-
-      <section class="card">
-        <div class="card__header">
-          <h2>Resumen general</h2>
-          <span id="summary-total">0</span>
-        </div>
-        <p class="hint">Pendientes sin completar en todas las obras.</p>
-        <ul id="summary-list" class="summary-list"></ul>
-        <p class="hint hint--empty" id="summary-empty" hidden>
-          Todavía no hay pendientes registrados.
-        </p>
-      </section>
-
-      <section class="card">
-        <div class="card__header">
-          <h2>Obras</h2>
-        </div>
-        <div class="obra-controls">
-          <label class="field">
-            <span>Obra actual</span>
-            <select id="obra-select"></select>
-          </label>
-          <form id="obra-form" class="obra-form">
-            <label class="field">
-              <span>Nueva obra</span>
-              <input
-                type="text"
-                id="obra-input"
-                name="obra"
-                placeholder="Ej. Calderón de la Barca"
-                autocomplete="off"
-                required
-              />
-            </label>
-            <button type="submit">Agregar obra</button>
-          </form>
-        </div>
-        <p class="current-obra" id="current-obra-label">
-          Agrega una obra para comenzar a registrar pendientes.
-        </p>
-      </section>
 
       <section class="card">
         <h2>Nuevo pendiente</h2>
@@ -115,6 +104,18 @@
             <ul id="edit-completed-list" class="task-list task-list--edit"></ul>
           </div>
         </div>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Resumen general</h2>
+          <span id="summary-total">0</span>
+        </div>
+        <p class="hint">Pendientes sin completar en todas las obras.</p>
+        <ul id="summary-list" class="summary-list"></ul>
+        <p class="hint hint--empty" id="summary-empty" hidden>
+          Todavía no hay pendientes registrados.
+        </p>
       </section>
     </main>
 

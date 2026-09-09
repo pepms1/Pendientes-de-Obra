@@ -32,6 +32,7 @@ const completedCount = document.getElementById("completed-count");
 const template = document.getElementById("task-item-template");
 
 const obraSelect = document.getElementById("obra-select");
+const obraAddToggle = document.getElementById("obra-add-toggle");
 const obraForm = document.getElementById("obra-form");
 const obraInput = document.getElementById("obra-input");
 const currentObraLabel = document.getElementById("current-obra-label");
@@ -112,6 +113,12 @@ const getInitErrorStatus = (code, message) => {
 
 const getObraName = (obraId) =>
   obras.find((obra) => obra.id === obraId)?.nombre || "Sin obra asignada";
+
+const closeObraForm = () => {
+  obraForm.hidden = true;
+  obraAddToggle.setAttribute("aria-expanded", "false");
+  obraAddToggle.textContent = "+ Nueva obra";
+};
 
 const setSelectedObra = (obraId) => {
   selectedObraId = obraId || "";
@@ -390,6 +397,16 @@ obraSelect.addEventListener("change", () => {
   setSelectedObra(obraSelect.value);
 });
 
+obraAddToggle.addEventListener("click", () => {
+  const willOpen = obraForm.hidden;
+  obraForm.hidden = !willOpen;
+  obraAddToggle.setAttribute("aria-expanded", String(willOpen));
+  obraAddToggle.textContent = willOpen ? "Cancelar" : "+ Nueva obra";
+  if (willOpen) {
+    obraInput.focus();
+  }
+});
+
 obraForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = obraInput.value.trim();
@@ -404,6 +421,7 @@ obraForm.addEventListener("submit", async (event) => {
     });
 
     obraInput.value = "";
+    closeObraForm();
     setSelectedObra(obraRef.id);
   } catch (error) {
     handleActionError(error);

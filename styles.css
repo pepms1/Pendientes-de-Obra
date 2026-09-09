@@ -14,13 +14,16 @@
 body {
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  padding: 48px 16px 64px;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0 0 64px;
   background: linear-gradient(180deg, #eef2ff 0%, #f8faff 100%);
 }
 
 .app {
   width: min(960px, 100%);
+  margin: 32px auto 0;
+  padding: 0 16px;
   display: grid;
   gap: 24px;
 }
@@ -161,18 +164,58 @@ select:disabled {
   font-size: 14px;
 }
 
-.obra-controls {
+.obra-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.obra-bar__inner {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 12px 16px;
   display: flex;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  align-items: flex-end;
+}
+
+.obra-bar__select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.obra-bar__select select {
+  min-width: 200px;
+}
+
+.obra-bar__add-toggle {
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #c7d2fe;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.obra-bar__add-toggle:hover {
+  background: #eff6ff;
 }
 
 .obra-form {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.obra-form input {
   flex: 1;
 }
 
@@ -181,14 +224,20 @@ select {
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 16px;
-  min-width: 220px;
   background: #ffffff;
 }
 
 .current-obra {
-  margin-top: 16px;
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 0 16px 10px;
+  font-size: 13px;
   font-weight: 600;
   color: #1d4ed8;
+}
+
+.current-obra:empty {
+  display: none;
 }
 
 .summary-list {
@@ -307,5 +356,9 @@ select {
   .task {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .obra-form {
+    flex-basis: 100%;
   }
 }
