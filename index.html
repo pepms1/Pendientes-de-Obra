@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pendientes Calderon de la Barca</title>
+    <title>Pendientes de Obra</title>
     <meta name="theme-color" content="#123a7b" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/icons/pdo-logo.svg" type="image/svg+xml" />
@@ -15,13 +15,54 @@
       <header class="app__header">
         <div>
           <p class="app__eyebrow">Control de obra</p>
-          <h1>Pendientes Calderon de la Barca</h1>
+          <h1>Pendientes de Obra</h1>
           <p class="app__subtitle">
-            Sincroniza tareas en la nube y marca avances desde cualquier dispositivo.
+            Administra varias obras, sincroniza tareas en la nube y marca avances desde cualquier dispositivo.
           </p>
         </div>
         <div class="status" id="status">Conectando...</div>
       </header>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Resumen general</h2>
+          <span id="summary-total">0</span>
+        </div>
+        <p class="hint">Pendientes sin completar en todas las obras.</p>
+        <ul id="summary-list" class="summary-list"></ul>
+        <p class="hint hint--empty" id="summary-empty" hidden>
+          Todavía no hay pendientes registrados.
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Obras</h2>
+        </div>
+        <div class="obra-controls">
+          <label class="field">
+            <span>Obra actual</span>
+            <select id="obra-select"></select>
+          </label>
+          <form id="obra-form" class="obra-form">
+            <label class="field">
+              <span>Nueva obra</span>
+              <input
+                type="text"
+                id="obra-input"
+                name="obra"
+                placeholder="Ej. Calderón de la Barca"
+                autocomplete="off"
+                required
+              />
+            </label>
+            <button type="submit">Agregar obra</button>
+          </form>
+        </div>
+        <p class="current-obra" id="current-obra-label">
+          Agrega una obra para comenzar a registrar pendientes.
+        </p>
+      </section>
 
       <section class="card">
         <h2>Nuevo pendiente</h2>
@@ -86,6 +127,15 @@
         <span class="task__meta"></span>
         <button type="button" class="task__delete" aria-label="Eliminar pendiente">
           Eliminar
+        </button>
+      </li>
+    </template>
+
+    <template id="summary-item-template">
+      <li class="summary-item">
+        <button type="button" class="summary-item__button">
+          <span class="summary-item__name"></span>
+          <span class="summary-item__count">0</span>
         </button>
       </li>
     </template>
