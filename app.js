@@ -6,6 +6,7 @@ import {
 import {
   addDoc,
   collection,
+  getDocs,
   getFirestore,
   onSnapshot,
   orderBy,
@@ -16,6 +17,8 @@ import {
   doc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+
+const SELECTED_OBRA_STORAGE_KEY = "pendientes-de-obra:selectedObraId";
 
 const statusEl = document.getElementById("status");
 const form = document.getElementById("task-form");
@@ -28,7 +31,20 @@ const activeCount = document.getElementById("task-count");
 const completedCount = document.getElementById("completed-count");
 const template = document.getElementById("task-item-template");
 
+const obraSelect = document.getElementById("obra-select");
+const obraForm = document.getElementById("obra-form");
+const obraInput = document.getElementById("obra-input");
+const currentObraLabel = document.getElementById("current-obra-label");
+
+const summaryList = document.getElementById("summary-list");
+const summaryTotal = document.getElementById("summary-total");
+const summaryEmpty = document.getElementById("summary-empty");
+const summaryItemTemplate = document.getElementById("summary-item-template");
+
 let db;
+let obras = [];
+let pendientes = [];
+let selectedObraId = localStorage.getItem(SELECTED_OBRA_STORAGE_KEY) || "";
 
 const handleActionError = (error) => {
   const errorCode = error?.code || "desconocido";
@@ -94,6 +110,51 @@ const getInitErrorStatus = (code, message) => {
   }
 };
 
+const getObraName = (obraId) =>
+  obras.find((obra) => obra.id === obraId)?.nombre || "Sin obra asignada";
+
+const setSelectedObra = (obraId) => {
+  selectedObraId = obraId || "";
+  if (selectedObraId) {
+    localStorage.setItem(SELECTED_OBRA_STORAGE_KEY, selectedObraId);
+  } else {
+    localStorage.removeItem(SELECTED_OBRA_STORAGE_KEY);
+  }
+  obraSelect.value = selectedObraId;
+  renderScopedTasks();
+  renderSummary();
+};
+
+const renderObraSelect = () => {
+  obraSelect.innerHTML = "";
+
+  if (obras.length === 0) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Sin obras registradas";
+    obraSelect.appendChild(option);
+    obraSelect.disabled = true;
+    selectedObraId = "";
+    return;
+  }
+
+  obraSelect.disabled = false;
+
+  obras.forEach((obra) => {
+    const option = document.createElement("option");
+    option.value = obra.id;
+    option.textContent = obra.nombre;
+    obraSelect.appendChild(option);
+  });
+
+  const stillExists = obras.some((obra) => obra.id === selectedObraId);
+  if (!stillExists) {
+    selectedObraId = obras[0].id;
+    localStorage.setItem(SELECTED_OBRA_STORAGE_KEY, selectedObraId);
+  }
+  obraSelect.value = selectedObraId;
+};
+
 const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   const fragment = template.content.cloneNode(true);
   const item = fragment.querySelector(".task");
@@ -139,17 +200,18 @@ const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   return fragment;
 };
 
-const renderTasks = (snapshot) => {
+const renderScopedTasks = () => {
   activeList.innerHTML = "";
   completedList.innerHTML = "";
   editActiveList.innerHTML = "";
   editCompletedList.innerHTML = "";
 
+  const scoped = pendientes.filter((item) => item.data.obraId === selectedObraId);
+
   let activeTotal = 0;
   let completedTotal = 0;
 
-  snapshot.forEach((docSnapshot) => {
-    const data = docSnapshot.data();
+  scoped.forEach(({ docSnapshot, data }) => {
     const targetList = data.completed ? completedList : activeList;
     const editList = data.completed ? editCompletedList : editActiveList;
 
@@ -165,6 +227,126 @@ const renderTasks = (snapshot) => {
 
   activeCount.textContent = activeTotal.toString();
   completedCount.textContent = completedTotal.toString();
+
+  const hasObra = obras.some((obra) => obra.id === selectedObraId);
+  form.querySelector("button").disabled = !hasObra;
+  input.disabled = !hasObra;
+
+  currentObraLabel.textContent = hasObra
+    ? `Trabajando en: ${getObraName(selectedObraId)}`
+    : "Agrega una obra para comenzar a registrar pendientes.";
+};
+
+const renderSummary = () => {
+  summaryList.innerHTML = "";
+
+  const countsByObra = new Map();
+  let total = 0;
+
+  pendientes.forEach(({ data }) => {
+    if (data.completed) return;
+    total += 1;
+    const key = data.obraId || "";
+    countsByObra.set(key, (countsByObra.get(key) || 0) + 1);
+  });
+
+  summaryTotal.textContent = total.toString();
+  summaryEmpty.hidden = pendientes.length > 0;
+
+  const rows = obras.map((obra) => ({
+    id: obra.id,
+    nombre: obra.nombre,
+    count: countsByObra.get(obra.id) || 0,
+  }));
+
+  if (countsByObra.has("")) {
+    rows.push({ id: "", nombre: "Sin obra asignada", count: countsByObra.get("") });
+  }
+
+  rows.forEach((row) => {
+    const fragment = summaryItemTemplate.content.cloneNode(true);
+    const button = fragment.querySelector(".summary-item__button");
+    const name = fragment.querySelector(".summary-item__name");
+    const count = fragment.querySelector(".summary-item__count");
+
+    name.textContent = row.nombre;
+    count.textContent = row.count.toString();
+
+    if (row.id === selectedObraId) {
+      button.classList.add("summary-item__button--active");
+    }
+
+    if (row.id) {
+      button.addEventListener("click", () => setSelectedObra(row.id));
+    } else {
+      button.disabled = true;
+    }
+
+    summaryList.appendChild(fragment);
+  });
+};
+
+const ensureDefaultObra = async () => {
+  const obrasSnapshot = await getDocs(collection(db, "obras"));
+  if (!obrasSnapshot.empty) return;
+
+  const pendientesSnapshot = await getDocs(collection(db, "pendientes"));
+  if (pendientesSnapshot.empty) return;
+
+  const defaultObraRef = await addDoc(collection(db, "obras"), {
+    nombre: "Calderón de la Barca",
+    createdAt: serverTimestamp(),
+  });
+
+  const migrations = [];
+  pendientesSnapshot.forEach((docSnapshot) => {
+    const data = docSnapshot.data();
+    if (!data.obraId) {
+      migrations.push(
+        updateDoc(doc(db, "pendientes", docSnapshot.id), { obraId: defaultObraRef.id })
+      );
+    }
+  });
+  await Promise.all(migrations);
+};
+
+const subscribeToObras = () => {
+  const obrasQuery = query(collection(db, "obras"), orderBy("nombre"));
+  onSnapshot(
+    obrasQuery,
+    (snapshot) => {
+      obras = snapshot.docs.map((docSnapshot) => ({
+        id: docSnapshot.id,
+        nombre: docSnapshot.data().nombre,
+      }));
+      renderObraSelect();
+      renderScopedTasks();
+      renderSummary();
+    },
+    handleActionError
+  );
+};
+
+const subscribeToPendientes = () => {
+  const pendientesQuery = query(collection(db, "pendientes"), orderBy("createdAt", "desc"));
+  let hasReceivedFirstSnapshot = false;
+
+  onSnapshot(
+    pendientesQuery,
+    (snapshot) => {
+      pendientes = snapshot.docs.map((docSnapshot) => ({
+        docSnapshot,
+        data: docSnapshot.data(),
+      }));
+      renderScopedTasks();
+      renderSummary();
+      if (!hasReceivedFirstSnapshot) {
+        hasReceivedFirstSnapshot = true;
+        setStatus("Sincronizado", "status--ok");
+      }
+    },
+    handleActionError
+  );
 };
 
 const init = async () => {
@@ -180,17 +362,14 @@ const init = async () => {
     await signInAnonymously(auth);
     db = getFirestore(app);
 
-    const pendientesRef = collection(db, "pendientes");
-    const pendientesQuery = query(pendientesRef, orderBy("createdAt", "desc"));
-    let hasReceivedFirstSnapshot = false;
+    try {
+      await ensureDefaultObra();
+    } catch (error) {
+      console.warn("No se pudo migrar a una obra por defecto:", error);
+    }
 
-    onSnapshot(pendientesQuery, (snapshot) => {
-      renderTasks(snapshot);
-      if (!hasReceivedFirstSnapshot) {
-        hasReceivedFirstSnapshot = true;
-        setStatus("Sincronizado", "status--ok");
-      }
-    }, handleActionError);
+    subscribeToObras();
+    subscribeToPendientes();
   } catch (error) {
     const errorCode = error?.code || "desconocido";
     const errorMessage = error?.message || "Sin detalles";
@@ -203,14 +382,38 @@ const init = async () => {
       return;
     }
 
-    setStatus("Configura Firebase y Authentication", "status--error");
+    setStatus(getInitErrorStatus(errorCode, errorMessage), "status--error");
   }
 };
+
+obraSelect.addEventListener("change", () => {
+  setSelectedObra(obraSelect.value);
+});
+
+obraForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const value = obraInput.value.trim();
+  if (!value || !db) {
+    return;
+  }
+
+  try {
+    const obraRef = await addDoc(collection(db, "obras"), {
+      nombre: value,
+      createdAt: serverTimestamp(),
+    });
+
+    obraInput.value = "";
+    setSelectedObra(obraRef.id);
+  } catch (error) {
+    handleActionError(error);
+  }
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = input.value.trim();
-  if (!value || !db) {
+  if (!value || !db || !selectedObraId) {
     return;
   }
 
@@ -218,6 +421,7 @@ form.addEventListener("submit", async (event) => {
     await addDoc(collection(db, "pendientes"), {
       text: value,
       completed: false,
+      obraId: selectedObraId,
       createdAt: serverTimestamp(),
     });
 

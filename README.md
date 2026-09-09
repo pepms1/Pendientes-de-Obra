@@ -1,6 +1,16 @@
 # Pendientes de Obra (Web App)
 
-Aplicación web simple para registrar pendientes de obra, con fecha automática y sincronización en la nube mediante Firebase Firestore.
+Aplicación web para administrar pendientes de varias obras a la vez, con fecha automática y sincronización en la nube mediante Firebase Firestore.
+
+La página principal muestra un **resumen general** con el total de pendientes sin completar de todas las obras (agrupados por obra). Desde ahí puedes:
+
+- Seleccionar la obra activa con el selector de la sección "Obras".
+- Agregar una obra nueva con el formulario "Nueva obra".
+- Dar clic a cualquier renglón del resumen para cambiar de obra rápidamente.
+
+Todo lo que agregues o edites en las secciones de "Nuevo pendiente", "Pendientes", "Completados" y "Editar pendientes" aplica únicamente a la obra seleccionada.
+
+Si ya tenías pendientes registrados antes de este cambio, la app los migra automáticamente a una obra llamada "Calderón de la Barca" la primera vez que carga.
 
 ## Configuración rápida
 
