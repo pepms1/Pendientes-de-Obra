@@ -19,6 +19,7 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 
 const SELECTED_OBRA_STORAGE_KEY = "pendientes-de-obra:selectedObraId";
+const ALL_OBRAS_VALUE = "__todas__";
 
 const statusEl = document.getElementById("status");
 const form = document.getElementById("task-form");
@@ -45,7 +46,7 @@ const summaryItemTemplate = document.getElementById("summary-item-template");
 let db;
 let obras = [];
 let pendientes = [];
-let selectedObraId = localStorage.getItem(SELECTED_OBRA_STORAGE_KEY) || "";
+let selectedObraId = localStorage.getItem(SELECTED_OBRA_STORAGE_KEY) || ALL_OBRAS_VALUE;
 
 const handleActionError = (error) => {
   const errorCode = error?.code || "desconocido";
@@ -121,12 +122,8 @@ const closeObraForm = () => {
 };
 
 const setSelectedObra = (obraId) => {
-  selectedObraId = obraId || "";
-  if (selectedObraId) {
-    localStorage.setItem(SELECTED_OBRA_STORAGE_KEY, selectedObraId);
-  } else {
-    localStorage.removeItem(SELECTED_OBRA_STORAGE_KEY);
-  }
+  selectedObraId = obraId || ALL_OBRAS_VALUE;
+  localStorage.setItem(SELECTED_OBRA_STORAGE_KEY, selectedObraId);
   obraSelect.value = selectedObraId;
   renderScopedTasks();
   renderSummary();
@@ -135,17 +132,10 @@ const setSelectedObra = (obraId) => {
 const renderObraSelect = () => {
   obraSelect.innerHTML = "";
 
-  if (obras.length === 0) {
-    const option = document.createElement("option");
-    option.value = "";
-    option.textContent = "Sin obras registradas";
-    obraSelect.appendChild(option);
-    obraSelect.disabled = true;
-    selectedObraId = "";
-    return;
-  }
-
-  obraSelect.disabled = false;
+  const allOption = document.createElement("option");
+  allOption.value = ALL_OBRAS_VALUE;
+  allOption.textContent = "Todas las obras";
+  obraSelect.appendChild(allOption);
 
   obras.forEach((obra) => {
     const option = document.createElement("option");
@@ -154,15 +144,16 @@ const renderObraSelect = () => {
     obraSelect.appendChild(option);
   });
 
-  const stillExists = obras.some((obra) => obra.id === selectedObraId);
-  if (!stillExists) {
-    selectedObraId = obras[0].id;
+  const isValidSelection =
+    selectedObraId === ALL_OBRAS_VALUE || obras.some((obra) => obra.id === selectedObraId);
+  if (!isValidSelection) {
+    selectedObraId = ALL_OBRAS_VALUE;
     localStorage.setItem(SELECTED_OBRA_STORAGE_KEY, selectedObraId);
   }
   obraSelect.value = selectedObraId;
 };
 
-const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
+const buildTaskItem = (docSnapshot, data, { showToggle, showDelete, showObra }) => {
   const fragment = template.content.cloneNode(true);
   const item = fragment.querySelector(".task");
   const toggle = fragment.querySelector(".task__toggle");
@@ -171,7 +162,9 @@ const buildTaskItem = (docSnapshot, data, { showToggle, showDelete }) => {
   const deleteButton = fragment.querySelector(".task__delete");
 
   text.textContent = data.text;
-  meta.textContent = `Registrado: ${formatDate(data.createdAt)}`;
+  meta.textContent = showObra
+    ? `${getObraName(data.obraId)} · Registrado: ${formatDate(data.createdAt)}`
+    : `Registrado: ${formatDate(data.createdAt)}`;
   toggle.checked = Boolean(data.completed);
 
   if (!showToggle) {
@@ -213,7 +206,10 @@ const renderScopedTasks = () => {
   editActiveList.innerHTML = "";
   editCompletedList.innerHTML = "";
 
-  const scoped = pendientes.filter((item) => item.data.obraId === selectedObraId);
+  const isAllView = selectedObraId === ALL_OBRAS_VALUE;
+  const scoped = isAllView
+    ? pendientes
+    : pendientes.filter((item) => item.data.obraId === selectedObraId);
 
   let activeTotal = 0;
   let completedTotal = 0;
@@ -228,20 +224,31 @@ const renderScopedTasks = () => {
       activeTotal += 1;
     }
 
-    targetList.appendChild(buildTaskItem(docSnapshot, data, { showToggle: true, showDelete: false }));
-    editList.appendChild(buildTaskItem(docSnapshot, data, { showToggle: false, showDelete: true }));
+    targetList.appendChild(
+      buildTaskItem(docSnapshot, data, { showToggle: true, showDelete: false, showObra: isAllView })
+    );
+    editList.appendChild(
+      buildTaskItem(docSnapshot, data, { showToggle: false, showDelete: true, showObra: isAllView })
+    );
   });
 
   activeCount.textContent = activeTotal.toString();
   completedCount.textContent = completedTotal.toString();
 
-  const hasObra = obras.some((obra) => obra.id === selectedObraId);
-  form.querySelector("button").disabled = !hasObra;
-  input.disabled = !hasObra;
+  const hasSpecificObra = !isAllView && obras.some((obra) => obra.id === selectedObraId);
+  form.querySelector("button").disabled = !hasSpecificObra;
+  input.disabled = !hasSpecificObra;
 
-  currentObraLabel.textContent = hasObra
-    ? `Trabajando en: ${getObraName(selectedObraId)}`
-    : "Agrega una obra para comenzar a registrar pendientes.";
+  if (isAllView) {
+    currentObraLabel.textContent =
+      obras.length > 0
+        ? "Viendo pendientes de todas las obras. Selecciona una obra para agregar pendientes nuevos."
+        : "Agrega una obra para comenzar a registrar pendientes.";
+  } else {
+    currentObraLabel.textContent = hasSpecificObra
+      ? `Trabajando en: ${getObraName(selectedObraId)}`
+      : "Agrega una obra para comenzar a registrar pendientes.";
+  }
 };
 
 const renderSummary = () => {
@@ -431,7 +438,7 @@ obraForm.addEventListener("submit", async (event) => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const value = input.value.trim();
-  if (!value || !db || !selectedObraId) {
+  if (!value || !db || selectedObraId === ALL_OBRAS_VALUE || !obras.some((obra) => obra.id === selectedObraId)) {
     return;
   }
 
